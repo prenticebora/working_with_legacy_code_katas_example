@@ -13,9 +13,7 @@ package com.industriallogic.crrap;
 
 import java.io.PrintWriter;
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.TreeMap;
 
 import untouchable.RecordSet;
 import untouchable.RiskAssessor;
@@ -33,11 +31,7 @@ public class AssetReport {
 	}
 
 	public void execute(RecordSet records, PrintWriter writer) {
-		assetReportData.groupTotal = new TreeMap<String, BigDecimal>();
-		assetReportData.positions = new TreeMap<String, BigDecimal>();
-		assetReportData.totalPositions = new BigDecimal("0.00");
-		assetReportData.riskTables = new HashMap<String, BigDecimal>();
-		assetReportData.assetToGroup = new HashMap<String, String>();
+		assetReportData.initAssetReportData();
 
 		assetReportData.totalPositions = calcRisk(records);
 
