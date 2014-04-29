@@ -44,8 +44,7 @@ public class AssetReport {
 		riskTables = new HashMap<String, BigDecimal>();
 		assetToGroup = new HashMap<String, String>();
 
-		totalPositions = calcRisk(records, groupTotal, positions,
-				totalPositions, riskTables, assetToGroup);
+		totalPositions = calcRisk(records);
 
 		printAssetRisk(writer, groupTotal, positions, totalPositions,
 				riskTables, assetToGroup);
@@ -102,11 +101,7 @@ public class AssetReport {
 		writer.flush();
 	}
 
-	private BigDecimal calcRisk(RecordSet records,
-			TreeMap<String, BigDecimal> groupTotal,
-			TreeMap<String, BigDecimal> positions, BigDecimal totalPositions,
-			HashMap<String, BigDecimal> riskTables,
-			HashMap<String, String> assetToGroup) {
+	private BigDecimal calcRisk(RecordSet records) {
 		for (int row = 0; row < records.getRowCount(); row++) {
 			BigDecimal positioning = new BigDecimal(1);
 			BigDecimal risk = new BigDecimal("0.00");
