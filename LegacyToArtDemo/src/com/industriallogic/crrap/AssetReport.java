@@ -47,52 +47,70 @@ public class AssetReport {
 	}
 
 	private void outputGroupsInSortedOrder(PrintWriter writer) {
-		Iterator<String> groups = assetReportData.groupTotal.keySet()
+		Iterator<String> groupsIter = assetReportData.groupTotal.keySet()
 				.iterator();
-		while (groups.hasNext()) {
-			String grp = groups.next();
 
-			BigDecimal position = assetReportData.groupTotal.get(grp);
-			BigDecimal product = position.multiply(new BigDecimal(100));
-			BigDecimal weight = product.divide(assetReportData.totalPositions,
-					2, BigDecimal.ROUND_HALF_UP);
-			writer.write("\t<group position='"
-					+ position.toPlainString());
-			writer.write("' weight='"
-					+ weight);
-			writer.write("'>\n");
-			writer.write("\t\t"
-					+ grp + "\n");
-			Iterator<String> iter = assetReportData.positions.keySet()
-					.iterator();
-			boolean notFirstOne = false;
-			while (iter.hasNext()) {
-				String asset = iter.next();
-				// Output asset only if it belongs in group
-				if (assetReportData.assetToGroup.get(asset).equalsIgnoreCase(
-						grp)) {
-					if (notFirstOne)
-						writer.write("\n");
-					writer.write("\t\t<asset position='"
-							+ assetReportData.positions.get(asset)
-									.toPlainString() + "' ");
-					BigDecimal p = assetReportData.positions.get(asset);
-					BigDecimal weight1 = p.multiply(new BigDecimal("100.00"))
-							.divide(position, 2, BigDecimal.ROUND_HALF_UP)
-							.setScale(2);
-					writer.write("weight='"
-							+ weight1
-							+ "' risk='"
-							+ assetReportData.riskTables.get(asset)
-									.toPlainString() + "'>\n");
-					writer.write("\t\t\t"
-							+ asset + "\n");
-					writer.write("\t\t</asset>");
-					notFirstOne = true;
-				}
-			}
-			writer.write("\n\t</group>\n");
+		while (groupsIter.hasNext()) {
+			String group = groupsIter.next();
+
+			outputGroupTag(writer, group);
 		}
+	}
+
+	private void outputGroupTag(PrintWriter writer, String group) {
+		BigDecimal positioning = assetReportData.groupTotal.get(group);
+		BigDecimal product = positioning.multiply(new BigDecimal(100));
+		BigDecimal weight = product.divide(assetReportData.totalPositions, 2,
+				BigDecimal.ROUND_HALF_UP);
+
+		writer.write("\t<group position='"
+				+ positioning.toPlainString());
+		writer.write("' weight='"
+				+ weight);
+		writer.write("'>\n");
+
+		writer.write("\t\t"
+				+ group + "\n");
+		Iterator<String> iter = assetReportData.positions.keySet().iterator();
+		boolean notFirstOne = false;
+		while (iter.hasNext()) {
+			String asset = iter.next();
+			// Output asset only if it belongs in group
+			if (assetReportData.assetToGroup.get(asset).equalsIgnoreCase(group)) {
+				if (notFirstOne)
+					writer.write("\n");
+				writer.write("\t\t<asset position='"
+						+ assetReportData.positions.get(asset).toPlainString()
+						+ "' ");
+				BigDecimal p = assetReportData.positions.get(asset);
+				BigDecimal weight1 = p.multiply(new BigDecimal("100.00"))
+						.divide(positioning, 2, BigDecimal.ROUND_HALF_UP)
+						.setScale(2);
+				writer.write("weight='"
+						+ weight1 + "' risk='"
+						+ assetReportData.riskTables.get(asset).toPlainString()
+						+ "'>\n");
+				writer.write("\t\t\t"
+						+ asset + "\n");
+				writer.write("\t\t</asset>");
+				notFirstOne = true;
+			}
+		}
+		writer.write("\n\t</group>\n");
+	}
+
+	private BigDecimal writeGroupTag(PrintWriter writer, String group) {
+		BigDecimal positioning = assetReportData.groupTotal.get(group);
+		BigDecimal product = positioning.multiply(new BigDecimal(100));
+		BigDecimal weight = product.divide(assetReportData.totalPositions, 2,
+				BigDecimal.ROUND_HALF_UP);
+
+		writer.write("\t<group position='"
+				+ positioning.toPlainString());
+		writer.write("' weight='"
+				+ weight);
+		writer.write("'>\n");
+		return positioning;
 	}
 
 }
