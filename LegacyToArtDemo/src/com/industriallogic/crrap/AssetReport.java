@@ -33,20 +33,16 @@ public class AssetReport {
 	}
 
 	public void execute(RecordSet records, PrintWriter writer) {
-		TreeMap<String, BigDecimal> groupTotal;
+		TreeMap<String, BigDecimal> groupTotal = new TreeMap<String, BigDecimal>();
 
 		// Store positions for all assets
-		TreeMap<String, BigDecimal> positions;
-		BigDecimal allPositions;
+		TreeMap<String, BigDecimal> positions = new TreeMap<String, BigDecimal>();
+		BigDecimal totalPositions = new BigDecimal("0.00");
 
 		// Risks for all assets
-		HashMap<String, BigDecimal> m_hmRiskTable;
-		HashMap<String, String> assetToGroup;
-		groupTotal = new TreeMap<String, BigDecimal>();
-		positions = new TreeMap<String, BigDecimal>();
-		m_hmRiskTable = new HashMap<String, BigDecimal>();
-		allPositions = new BigDecimal("0.00");
-		assetToGroup = new HashMap<String, String>();
+		HashMap<String, BigDecimal> riskTables = new HashMap<String, BigDecimal>();
+		HashMap<String, String> assetToGroup = new HashMap<String, String>();
+
 		for (int row = 0; row < records.getRowCount(); row++) {
 			BigDecimal positioning = new BigDecimal(1);
 			BigDecimal risk = new BigDecimal("0.00");
@@ -81,17 +77,18 @@ public class AssetReport {
 						BigDecimal.ROUND_HALF_UP);
 				positions.put(issue, positioning);
 			}
-			allPositions = allPositions.add(positions.get(issue));
+			totalPositions = totalPositions.add(positions.get(issue));
 
 			String group = records.getItem(row, "ISSUE_GROUP");
 			String name = records.getItem(row, "ISSUE_NAME");
 			assetToGroup.put(name, group);
 			BigDecimal value = new BigDecimal("0");
+
 			if (groupTotal.containsKey(group))
 				value = value.add(groupTotal.get(group)).setScale(2);
 			value = value.add(positions.get(issue));
 			groupTotal.put(group, value.setScale(2));
-			m_hmRiskTable.put(issue, risk);
+			riskTables.put(issue, risk);
 		}
 
 		writer.write("<groups>\n");
@@ -102,7 +99,7 @@ public class AssetReport {
 
 			BigDecimal position = groupTotal.get(grp);
 			BigDecimal product = position.multiply(new BigDecimal(100));
-			BigDecimal weight = product.divide(allPositions, 2,
+			BigDecimal weight = product.divide(totalPositions, 2,
 					BigDecimal.ROUND_HALF_UP);
 			writer.write("\t<group position='"
 					+ position.toPlainString());
@@ -127,7 +124,7 @@ public class AssetReport {
 							.setScale(2);
 					writer.write("weight='"
 							+ weight1 + "' risk='"
-							+ m_hmRiskTable.get(asset).toPlainString() + "'>\n");
+							+ riskTables.get(asset).toPlainString() + "'>\n");
 					writer.write("\t\t\t"
 							+ asset + "\n");
 					writer.write("\t\t</asset>");
