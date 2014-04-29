@@ -22,15 +22,10 @@ import untouchable.RiskAssessor;
 
 public class AssetReport {
 
-	private RiskAssessor assessor;
-	private TreeMap<String, BigDecimal> groupTotal;
-	private TreeMap<String, BigDecimal> positions;
-	private BigDecimal totalPositions;
-	private HashMap<String, BigDecimal> riskTables;
-	private HashMap<String, String> assetToGroup;
+	private AssetReportData assetReportData = new AssetReportData();
 
 	public AssetReport(RiskAssessor assessor) {
-		this.assessor = assessor;
+		this.assetReportData.assessor = assessor;
 	}
 
 	public AssetReport() {
@@ -38,13 +33,13 @@ public class AssetReport {
 	}
 
 	public void execute(RecordSet records, PrintWriter writer) {
-		groupTotal = new TreeMap<String, BigDecimal>();
-		positions = new TreeMap<String, BigDecimal>();
-		totalPositions = new BigDecimal("0.00");
-		riskTables = new HashMap<String, BigDecimal>();
-		assetToGroup = new HashMap<String, String>();
+		assetReportData.groupTotal = new TreeMap<String, BigDecimal>();
+		assetReportData.positions = new TreeMap<String, BigDecimal>();
+		assetReportData.totalPositions = new BigDecimal("0.00");
+		assetReportData.riskTables = new HashMap<String, BigDecimal>();
+		assetReportData.assetToGroup = new HashMap<String, String>();
 
-		totalPositions = calcRisk(records);
+		assetReportData.totalPositions = calcRisk(records);
 
 		printAssetRisk(writer);
 	}
@@ -52,14 +47,15 @@ public class AssetReport {
 	private void printAssetRisk(PrintWriter writer) {
 		writer.write("<groups>\n");
 		// groups in sorted order
-		Iterator<String> groups = groupTotal.keySet().iterator();
+		Iterator<String> groups = assetReportData.groupTotal.keySet()
+				.iterator();
 		while (groups.hasNext()) {
 			String grp = groups.next();
 
-			BigDecimal position = groupTotal.get(grp);
+			BigDecimal position = assetReportData.groupTotal.get(grp);
 			BigDecimal product = position.multiply(new BigDecimal(100));
-			BigDecimal weight = product.divide(totalPositions, 2,
-					BigDecimal.ROUND_HALF_UP);
+			BigDecimal weight = product.divide(assetReportData.totalPositions,
+					2, BigDecimal.ROUND_HALF_UP);
 			writer.write("\t<group position='"
 					+ position.toPlainString());
 			writer.write("' weight='"
@@ -67,23 +63,28 @@ public class AssetReport {
 			writer.write("'>\n");
 			writer.write("\t\t"
 					+ grp + "\n");
-			Iterator<String> iter = positions.keySet().iterator();
+			Iterator<String> iter = assetReportData.positions.keySet()
+					.iterator();
 			boolean notFirstOne = false;
 			while (iter.hasNext()) {
 				String asset = iter.next();
 				// Output asset only if it belongs in group
-				if (assetToGroup.get(asset).equalsIgnoreCase(grp)) {
+				if (assetReportData.assetToGroup.get(asset).equalsIgnoreCase(
+						grp)) {
 					if (notFirstOne)
 						writer.write("\n");
 					writer.write("\t\t<asset position='"
-							+ positions.get(asset).toPlainString() + "' ");
-					BigDecimal p = positions.get(asset);
+							+ assetReportData.positions.get(asset)
+									.toPlainString() + "' ");
+					BigDecimal p = assetReportData.positions.get(asset);
 					BigDecimal weight1 = p.multiply(new BigDecimal("100.00"))
 							.divide(position, 2, BigDecimal.ROUND_HALF_UP)
 							.setScale(2);
 					writer.write("weight='"
-							+ weight1 + "' risk='"
-							+ riskTables.get(asset).toPlainString() + "'>\n");
+							+ weight1
+							+ "' risk='"
+							+ assetReportData.riskTables.get(asset)
+									.toPlainString() + "'>\n");
 					writer.write("\t\t\t"
 							+ asset + "\n");
 					writer.write("\t\t</asset>");
@@ -111,13 +112,14 @@ public class AssetReport {
 				positioning = perItem.multiply(
 						records.getDecimal(row, "QUANTITY")).setScale(2,
 						BigDecimal.ROUND_HALF_UP);
-				BigDecimal riskCoefficient = assessor.getRiskCoefficient(
-						records.getItem(row, "ISSUE_FAMILY"),
-						records.getDecimal(row, "TERM_TWO"));
+				BigDecimal riskCoefficient = assetReportData.assessor
+						.getRiskCoefficient(
+								records.getItem(row, "ISSUE_FAMILY"),
+								records.getDecimal(row, "TERM_TWO"));
 				BigDecimal product = riskCoefficient.multiply(positioning);
 				risk = product.divide(new BigDecimal("100.00"), 2,
 						BigDecimal.ROUND_HALF_UP);
-				positions.put(issue, positioning);
+				assetReportData.positions.put(issue, positioning);
 			} else {
 				// pos = (quantity * market) - total price[TERM_ONE]
 				positioning = records.getDecimal(row, "QUANTITY").multiply(
@@ -129,22 +131,24 @@ public class AssetReport {
 						.multiply(positioning);
 				risk = product.divide(new BigDecimal("100.00"), 2,
 						BigDecimal.ROUND_HALF_UP);
-				positions.put(issue, positioning);
+				assetReportData.positions.put(issue, positioning);
 			}
-			totalPositions = totalPositions.add(positions.get(issue));
+			assetReportData.totalPositions = assetReportData.totalPositions
+					.add(assetReportData.positions.get(issue));
 
 			String group = records.getItem(row, "ISSUE_GROUP");
 			String name = records.getItem(row, "ISSUE_NAME");
-			assetToGroup.put(name, group);
+			assetReportData.assetToGroup.put(name, group);
 			BigDecimal value = new BigDecimal("0");
 
-			if (groupTotal.containsKey(group))
-				value = value.add(groupTotal.get(group)).setScale(2);
-			value = value.add(positions.get(issue));
-			groupTotal.put(group, value.setScale(2));
-			riskTables.put(issue, risk);
+			if (assetReportData.groupTotal.containsKey(group))
+				value = value.add(assetReportData.groupTotal.get(group))
+						.setScale(2);
+			value = value.add(assetReportData.positions.get(issue));
+			assetReportData.groupTotal.put(group, value.setScale(2));
+			assetReportData.riskTables.put(issue, risk);
 		}
-		return totalPositions;
+		return assetReportData.totalPositions;
 	}
 
 }
