@@ -23,6 +23,11 @@ import untouchable.RiskAssessor;
 public class AssetReport {
 
 	private RiskAssessor assessor;
+	private TreeMap<String, BigDecimal> groupTotal;
+	private TreeMap<String, BigDecimal> positions;
+	private BigDecimal totalPositions;
+	private HashMap<String, BigDecimal> riskTables;
+	private HashMap<String, String> assetToGroup;
 
 	public AssetReport(RiskAssessor assessor) {
 		this.assessor = assessor;
@@ -33,13 +38,11 @@ public class AssetReport {
 	}
 
 	public void execute(RecordSet records, PrintWriter writer) {
-		TreeMap<String, BigDecimal> groupTotal = new TreeMap<String, BigDecimal>();
-
-		TreeMap<String, BigDecimal> positions = new TreeMap<String, BigDecimal>();
-		BigDecimal totalPositions = new BigDecimal("0.00");
-
-		HashMap<String, BigDecimal> riskTables = new HashMap<String, BigDecimal>();
-		HashMap<String, String> assetToGroup = new HashMap<String, String>();
+		groupTotal = new TreeMap<String, BigDecimal>();
+		positions = new TreeMap<String, BigDecimal>();
+		totalPositions = new BigDecimal("0.00");
+		riskTables = new HashMap<String, BigDecimal>();
+		assetToGroup = new HashMap<String, String>();
 
 		totalPositions = calcRisk(records, groupTotal, positions,
 				totalPositions, riskTables, assetToGroup);
