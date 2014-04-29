@@ -33,14 +33,20 @@ public class AssetReport {
 	public void execute(RecordSet records, PrintWriter writer) {
 		assetReportData.initAssetReportData();
 
-		assetReportData.totalPositions = assetReportData.calcRisk(records);
+		assetReportData.setTotalPositions(assetReportData.calcRisk(records));
 
 		printAssetRisk(writer);
 	}
 
 	private void printAssetRisk(PrintWriter writer) {
 		writer.write("<groups>\n");
-		// groups in sorted order
+		outputGroupsInSortedOrder(writer);
+		writer.write("</groups>\n");
+
+		writer.flush();
+	}
+
+	private void outputGroupsInSortedOrder(PrintWriter writer) {
 		Iterator<String> groups = assetReportData.groupTotal.keySet()
 				.iterator();
 		while (groups.hasNext()) {
@@ -87,8 +93,6 @@ public class AssetReport {
 			}
 			writer.write("\n\t</group>\n");
 		}
-		writer.write("</groups>\n");
-		writer.flush();
 	}
 
 }

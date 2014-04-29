@@ -76,4 +76,8 @@ public class AssetReportData {
 		}
 		return totalPositions;
 	}
+
+	public void setTotalPositions(BigDecimal calcRisk) {
+		this.totalPositions = calcRisk;
+	}
 }
