@@ -33,7 +33,8 @@ public class AssetReport {
 	public void execute(RecordSet records, PrintWriter writer) {
 		assetReportData.initAssetReportData();
 
-		assetReportData.setTotalPositions(assetReportData.calcRisk(records));
+		BigDecimal totalRiskPositioning = assetReportData.calcRisk(records);
+		assetReportData.setTotalPositions(totalRiskPositioning);
 
 		printAssetRisk(writer);
 	}
@@ -62,12 +63,25 @@ public class AssetReport {
 
 		outputGroupTagAndProperties(writer, positioning);
 
-		outputGroupAndAssetTags(writer, group, positioning);
-		
+		outputGroupContentAndAssetTags(writer, group, positioning);
+
 		closeGroupTag(writer);
 	}
 
-	private void outputGroupAndAssetTags(PrintWriter writer, String group,
+	private void outputGroupTagAndProperties(PrintWriter writer,
+			BigDecimal positioning) {
+		BigDecimal product = positioning.multiply(new BigDecimal(100));
+		BigDecimal weight = product.divide(assetReportData.totalPositions, 2,
+				BigDecimal.ROUND_HALF_UP);
+
+		writer.write("\t<group position='"
+				+ positioning.toPlainString());
+		writer.write("' weight='"
+				+ weight);
+		writer.write("'>\n");
+	}
+
+	private void outputGroupContentAndAssetTags(PrintWriter writer, String group,
 			BigDecimal positioning) {
 		writer.write("\t\t"
 				+ group + "\n");
@@ -112,19 +126,6 @@ public class AssetReport {
 		}
 
 		return notFirstOne;
-	}
-
-	private void outputGroupTagAndProperties(PrintWriter writer,
-			BigDecimal positioning) {
-		BigDecimal product = positioning.multiply(new BigDecimal(100));
-		BigDecimal weight = product.divide(assetReportData.totalPositions, 2,
-				BigDecimal.ROUND_HALF_UP);
-
-		writer.write("\t<group position='"
-				+ positioning.toPlainString());
-		writer.write("' weight='"
-				+ weight);
-		writer.write("'>\n");
 	}
 
 }
