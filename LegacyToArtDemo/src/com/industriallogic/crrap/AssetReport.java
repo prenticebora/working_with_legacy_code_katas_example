@@ -46,15 +46,10 @@ public class AssetReport {
 
 		totalPositions = calcRisk(records);
 
-		printAssetRisk(writer, groupTotal, positions, totalPositions,
-				riskTables, assetToGroup);
+		printAssetRisk(writer);
 	}
 
-	private void printAssetRisk(PrintWriter writer,
-			TreeMap<String, BigDecimal> groupTotal,
-			TreeMap<String, BigDecimal> positions, BigDecimal totalPositions,
-			HashMap<String, BigDecimal> riskTables,
-			HashMap<String, String> assetToGroup) {
+	private void printAssetRisk(PrintWriter writer) {
 		writer.write("<groups>\n");
 		// groups in sorted order
 		Iterator<String> groups = groupTotal.keySet().iterator();
