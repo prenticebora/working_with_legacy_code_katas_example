@@ -35,14 +35,75 @@ public class AssetReport {
 	public void execute(RecordSet records, PrintWriter writer) {
 		TreeMap<String, BigDecimal> groupTotal = new TreeMap<String, BigDecimal>();
 
-		// Store positions for all assets
 		TreeMap<String, BigDecimal> positions = new TreeMap<String, BigDecimal>();
 		BigDecimal totalPositions = new BigDecimal("0.00");
 
-		// Risks for all assets
 		HashMap<String, BigDecimal> riskTables = new HashMap<String, BigDecimal>();
 		HashMap<String, String> assetToGroup = new HashMap<String, String>();
 
+		totalPositions = calcRisk(records, groupTotal, positions,
+				totalPositions, riskTables, assetToGroup);
+
+		printAssetRisk(writer, groupTotal, positions, totalPositions,
+				riskTables, assetToGroup);
+	}
+
+	private void printAssetRisk(PrintWriter writer,
+			TreeMap<String, BigDecimal> groupTotal,
+			TreeMap<String, BigDecimal> positions, BigDecimal totalPositions,
+			HashMap<String, BigDecimal> riskTables,
+			HashMap<String, String> assetToGroup) {
+		writer.write("<groups>\n");
+		// groups in sorted order
+		Iterator<String> groups = groupTotal.keySet().iterator();
+		while (groups.hasNext()) {
+			String grp = groups.next();
+
+			BigDecimal position = groupTotal.get(grp);
+			BigDecimal product = position.multiply(new BigDecimal(100));
+			BigDecimal weight = product.divide(totalPositions, 2,
+					BigDecimal.ROUND_HALF_UP);
+			writer.write("\t<group position='"
+					+ position.toPlainString());
+			writer.write("' weight='"
+					+ weight);
+			writer.write("'>\n");
+			writer.write("\t\t"
+					+ grp + "\n");
+			Iterator<String> iter = positions.keySet().iterator();
+			boolean notFirstOne = false;
+			while (iter.hasNext()) {
+				String asset = iter.next();
+				// Output asset only if it belongs in group
+				if (assetToGroup.get(asset).equalsIgnoreCase(grp)) {
+					if (notFirstOne)
+						writer.write("\n");
+					writer.write("\t\t<asset position='"
+							+ positions.get(asset).toPlainString() + "' ");
+					BigDecimal p = positions.get(asset);
+					BigDecimal weight1 = p.multiply(new BigDecimal("100.00"))
+							.divide(position, 2, BigDecimal.ROUND_HALF_UP)
+							.setScale(2);
+					writer.write("weight='"
+							+ weight1 + "' risk='"
+							+ riskTables.get(asset).toPlainString() + "'>\n");
+					writer.write("\t\t\t"
+							+ asset + "\n");
+					writer.write("\t\t</asset>");
+					notFirstOne = true;
+				}
+			}
+			writer.write("\n\t</group>\n");
+		}
+		writer.write("</groups>\n");
+		writer.flush();
+	}
+
+	private BigDecimal calcRisk(RecordSet records,
+			TreeMap<String, BigDecimal> groupTotal,
+			TreeMap<String, BigDecimal> positions, BigDecimal totalPositions,
+			HashMap<String, BigDecimal> riskTables,
+			HashMap<String, String> assetToGroup) {
 		for (int row = 0; row < records.getRowCount(); row++) {
 			BigDecimal positioning = new BigDecimal(1);
 			BigDecimal risk = new BigDecimal("0.00");
@@ -90,51 +151,7 @@ public class AssetReport {
 			groupTotal.put(group, value.setScale(2));
 			riskTables.put(issue, risk);
 		}
-
-		writer.write("<groups>\n");
-		// groups in sorted order
-		Iterator<String> groups = groupTotal.keySet().iterator();
-		while (groups.hasNext()) {
-			String grp = groups.next();
-
-			BigDecimal position = groupTotal.get(grp);
-			BigDecimal product = position.multiply(new BigDecimal(100));
-			BigDecimal weight = product.divide(totalPositions, 2,
-					BigDecimal.ROUND_HALF_UP);
-			writer.write("\t<group position='"
-					+ position.toPlainString());
-			writer.write("' weight='"
-					+ weight);
-			writer.write("'>\n");
-			writer.write("\t\t"
-					+ grp + "\n");
-			Iterator<String> iter = positions.keySet().iterator();
-			boolean notFirstOne = false;
-			while (iter.hasNext()) {
-				String asset = iter.next();
-				// Output asset only if it belongs in group
-				if (assetToGroup.get(asset).equalsIgnoreCase(grp)) {
-					if (notFirstOne)
-						writer.write("\n");
-					writer.write("\t\t<asset position='"
-							+ positions.get(asset).toPlainString() + "' ");
-					BigDecimal p = positions.get(asset);
-					BigDecimal weight1 = p.multiply(new BigDecimal("100.00"))
-							.divide(position, 2, BigDecimal.ROUND_HALF_UP)
-							.setScale(2);
-					writer.write("weight='"
-							+ weight1 + "' risk='"
-							+ riskTables.get(asset).toPlainString() + "'>\n");
-					writer.write("\t\t\t"
-							+ asset + "\n");
-					writer.write("\t\t</asset>");
-					notFirstOne = true;
-				}
-			}
-			writer.write("\n\t</group>\n");
-		}
-		writer.write("</groups>\n");
-		writer.flush();
+		return totalPositions;
 	}
 
 }
